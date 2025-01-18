@@ -8,22 +8,34 @@ class StartingApp(tk.Tk):
         if self.attributes("-fullscreen"):
             self.overrideredirect(True)
             self.attributes('-fullscreen', False)
+            self.anchor_button['state'] = "normal"
+
             self.menu_frame.config(width=self.window_width, height=30, bg="green")
             self.main_frame.config(width=self.window_width, height=470)
             return
 
         self.overrideredirect(False)
         self.attributes('-fullscreen', True)
+        self.anchor_button['state'] = "disabled"
+
         self.menu_frame.config(width=self.screen_width, height=30, bg="dark slate gray")
         self.main_frame.config(width=self.screen_width, height=self.screen_height)
         return
 
     def anchor(self):
         if self.overrideredirect():
+            self.x_coordinate = self.winfo_x() - 8
+            self.y_coordinate = self.winfo_y() - 32
+
+            self.geometry(
+                "{}x{}+{}+{}".format(self.window_width, self.window_height, self.x_coordinate, self.y_coordinate))
+
             self.overrideredirect(False)
+            self.bind('<Leave>', self.lower_window)
             return
 
         self.overrideredirect(True)
+        self.unbind('<Leave>')
 
         self.x_coordinate = self.winfo_x() + 8
         self.y_coordinate = self.winfo_y() + 32
@@ -67,16 +79,19 @@ class StartingApp(tk.Tk):
         self.geometry(
             "{}x{}+{}+{}".format(self.window_width, self.window_height, self.x_coordinate, self.y_coordinate))
 
+    def lower_window(self, event):
+        self.lower()
+
     def __init__(self):
         super().__init__()
 
         # Initial
         self.title("To Do")
         self.resizable(False, False)
-        self.lift()
         self.protocol("WM_DELETE_WINDOW", exit)
         self.overrideredirect(True)
         self.wm_attributes("-transparentcolor", "green")
+        self.bind('<Leave>', self.lower_window)
 
         self.window_width = 500
         self.window_height = 500
@@ -93,10 +108,10 @@ class StartingApp(tk.Tk):
         self.menu_frame.grid(row=0, column=0)
         self.menu_frame.pack_propagate(False)
 
-        self.anchor_button = tk.Button(self.menu_frame, name="exit_button", text="X", font=("Arial", 13, "bold"),
-                                       bg="black", fg="white")
-        self.anchor_button.config(command=self.destroy, width=2)
-        self.anchor_button.pack(side=tk.RIGHT, anchor=tk.NE)
+        self.exit_button = tk.Button(self.menu_frame, name="exit_button", text="X", font=("Arial", 13, "bold"),
+                                     bg="black", fg="white")
+        self.exit_button.config(command=self.destroy, width=2)
+        self.exit_button.pack(side=tk.RIGHT, anchor=tk.NE)
 
         self.fullscreen_button = tk.Button(self.menu_frame, name="fullscreen_button", text="🗖", font=13,
                                            bg="black", fg="white")
