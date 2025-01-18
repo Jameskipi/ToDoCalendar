@@ -91,7 +91,7 @@ class StartingApp(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", exit)
         self.overrideredirect(True)
         self.wm_attributes("-transparentcolor", "green")
-        self.bind('<Leave>', self.lower_window)
+        # self.bind('<Leave>', self.lower_window)
 
         self.window_width = 500
         self.window_height = 500
@@ -128,6 +128,44 @@ class StartingApp(tk.Tk):
         self.main_frame.config(highlightthickness=2, highlightbackground="black")
         self.main_frame.grid(row=1, column=0)
         self.main_frame.pack_propagate(False)
+
+        # Blank1 frame
+        self.blank1_frame = tk.Frame(self.main_frame, name="blank1_frame", bg="green", width=self.window_width - 4,
+                                     height=30)
+        self.blank1_frame.grid(row=0, column=0)
+        self.blank1_frame.pack_propagate(False)
+
+        # Month frame
+        self.month_frame = tk.Frame(self.main_frame, name="month_frame", bg="green", width=self.window_width - 4,
+                                     height=50)
+        self.month_frame.grid(row=1, column=0)
+        self.month_frame.pack_propagate(False)
+
+        self.back_button = tk.Button(self.month_frame, name="back_button", text="<",
+                                     font=("Arial", 13, "bold"), bg="black", fg="white")
+        self.back_button.config(command=lambda: self.destroy(), width=1, height=2)
+        self.back_button.grid(row=0, column=0)
+
+        self.month_label = tk.Label(self.month_frame, name="month_label", text="Styczeń", font=("Arial", 15, "bold"))
+        self.month_label.config(bg="black", fg="white", width=15, height=2)
+        self.month_label.config(highlightthickness=1, highlightbackground="gray")
+        self.month_label.grid(row=0, column=1)
+
+        self.year_label = tk.Label(self.month_frame, name="year_label", text="2025", font=("Arial", 15, "bold"))
+        self.year_label.config(bg="black", fg="white", width=5, height=2)
+        self.year_label.config(highlightthickness=1, highlightbackground="gray")
+        self.year_label.grid(row=0, column=2)
+
+        self.next_button = tk.Button(self.month_frame, name="next_button", text=">",
+                                     font=("Arial", 13, "bold"), bg="black", fg="white")
+        self.next_button.config(command=lambda: self.destroy(), width=1, height=2)
+        self.next_button.grid(row=0, column=3)
+
+        # Blank2 frame
+        self.blank2_frame = tk.Frame(self.main_frame, name="blank2_frame", bg="green", width=self.window_width - 4,
+                                     height=30)
+        self.blank2_frame.grid(row=2, column=0)
+        self.blank2_frame.pack_propagate(False)
 
 
 if __name__ == "__main__":
