@@ -154,9 +154,6 @@ class App(tk.Tk):
             except RuntimeError:
                 break
 
-    def show_events(self, info):
-        print(info)
-
     def update_days(self):
         days_raw = monthcalendar(self.year, self.month)
         days = []
@@ -219,9 +216,11 @@ class App(tk.Tk):
             for event in jsonfile:
                 for button in self.days_frame.winfo_children():
                     if button.winfo_name() == event['button']:
-                        button.configure(bg=event['priority'],
-                                         command=lambda day=self.day_button: self.remove_event(day))
-                        button.bind("<Enter>", func=lambda e: self.show_events(event['text']))
+                        button.bind("<Enter>", self.show_events)
+                        button.bind("<Leave>", self.hide_events)
+
+                        if button.cget('bg') != "RED":
+                            button.configure(bg=event['priority'])
 
         self.update_today()
 
@@ -292,6 +291,10 @@ class App(tk.Tk):
             self.main_frame.configure(bg="green")
             for widget in self.main_frame.winfo_children():
                 widget.configure(bg="green")
+
+            # Show less details
+            self.details_frame.config(height=96)
+
             return
 
         self.overrideredirect(False)
@@ -305,6 +308,10 @@ class App(tk.Tk):
         self.main_frame.configure(bg="dark slate gray")
         for widget in self.main_frame.winfo_children():
             widget.configure(bg="dark slate gray")
+
+        # Show more details
+        self.details_frame.config(height=200)
+
         return
 
     def anchor(self):
@@ -376,8 +383,42 @@ class App(tk.Tk):
         self.add_app = AddApp(data)
         self.add_app.mainloop()
 
-    def remove_event(self, button):
-        print("Remove function")
+    def show_events(self, event):
+        widget_name = str(event.widget).split(".")[-1]
+        jsonpath = f"data/{self.year}-{self.month}.json"
+
+        for button in self.days_frame.winfo_children():
+            if button.winfo_name() == widget_name:
+                day = button.cget('text')
+                selected_date = f"{self.year}-{self.month}-{day}"
+
+                if os.path.isfile(jsonpath):
+                    with open(jsonpath, mode='r', encoding='utf-8') as file:
+                        jsonfile = json.load(file)
+
+                    texts = []
+                    for event in jsonfile:
+                        if event['date'] == selected_date:
+                            texts.append(event['text'])
+
+                    ready_text = ""
+                    for i, text in enumerate(texts):
+                        if (i == 3):
+                            ready_text += "...\n"
+
+                        ready_text = ready_text + f"{i+1}. {text}\n"
+
+                    ready_text = ready_text[:-1]
+
+                    eu_date = selected_date.split("-")
+                    eu_date = f"{eu_date[2]}.{eu_date[1]}.{eu_date[0]}"
+
+                    self.detail_date_label.configure(text=eu_date, bg="black", fg=button.cget("bg"))
+                    self.detail_label.configure(text=ready_text, bg="black", fg=button.cget("bg"))
+
+    def hide_events(self, event):
+        self.detail_date_label.configure(text="", bg="green")
+        self.detail_label.configure(text="", bg="green")
 
     def exit(self):
         try:
@@ -499,6 +540,14 @@ class App(tk.Tk):
         self.details_frame.config(highlightthickness=2, highlightbackground="black")
         self.details_frame.grid(row=5, column=0)
         self.details_frame.pack_propagate(False)
+
+        self.detail_date_label = tk.Label(self.details_frame, name="detail_date_label",
+                                     font=("Arial", 12, "bold"), bg="green", fg="white")
+        self.detail_date_label.pack(pady=3)
+
+        self.detail_label = tk.Label(self.details_frame, name="detail1_label", anchor="n", justify="left",
+                                     font=("Arial", 9, "bold"), bg="green", fg="white")
+        self.detail_label.pack()
 
         # Get current date
         self.year = 0
