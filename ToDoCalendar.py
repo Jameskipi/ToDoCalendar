@@ -893,7 +893,6 @@ class App(tk.Tk):
         # Initial
         self.title("To Do")
         self.resizable(False, False)
-        self.protocol("WM_DELETE_WINDOW", exit)
         self.overrideredirect(True)
         self.wm_attributes("-transparentcolor", "green")
         self.configure(bg='gray')
