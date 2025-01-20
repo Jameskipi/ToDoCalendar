@@ -2,6 +2,7 @@ import time
 import tkinter as tk
 import os
 import json
+import logging
 from datetime import date
 from calendar import monthcalendar, monthrange
 from threading import Thread
@@ -23,6 +24,7 @@ class AddApp(tk.Tk):
 
     def __init__(self, data):
         super().__init__()
+
         self.data = data
         self.date = data[0]
         self.data_button = data[1]
@@ -52,6 +54,11 @@ class AddApp(tk.Tk):
 
         # Info label
         eu_date = self.date.split("-")
+        if int(eu_date[1]) < 10:
+            eu_date[1] = "0" + eu_date[1]
+        if int(eu_date[2]) < 10:
+            eu_date[2] = "0" + eu_date[2]
+
         eu_date = f"{eu_date[2]}.{eu_date[1]}.{eu_date[0]}"
 
         self.info_label = tk.Label(self.input_frame, name="info_label", bg="#4fb7bf", width=10, text=eu_date,
@@ -108,9 +115,6 @@ class AddApp(tk.Tk):
             "priority": self.priority.get()
         }
 
-        if not os.path.isdir("data"):
-            os.makedirs("data")
-
         year_month = self.date.split("-")
         year_month = f"{year_month[0]}-{year_month[1]}"
 
@@ -127,6 +131,143 @@ class AddApp(tk.Tk):
             feeds.append(data)
             json.dump(feeds, file)
 
+        logging.warning(f'Added new event: {data}')
+
+        self.exit()
+
+
+class RemoveApp(tk.Tk):
+    def exit(self):
+        self.data_button.configure(bg="black", fg="white")
+        app.update_days()
+        self.destroy()
+
+    def event_changed(self, *args):
+        selected = self.selected_event.get()
+
+        if selected == "Remove All":
+            self.event_menu.configure(bg="red")
+        else:
+            self.event_menu.configure(bg="gray")
+
+    def __init__(self, data):
+        super().__init__()
+
+        self.data = data
+        self.date = data[0]
+        self.data_button = data[1]
+        self.data_button.configure(bg="light gray", fg="black")
+
+        # Initial
+        self.title("To Do")
+        self.resizable(False, False)
+        self.overrideredirect(True)
+        self.wm_attributes("-transparentcolor", "green")
+        self.lift()
+        self.attributes("-topmost", True)
+
+        self.window_width = 600
+        self.window_height = 50
+        screen_width = self.winfo_screenwidth()
+        screen_height = self.winfo_screenheight()
+        x_coordinate = int((screen_width / 2) - (self.window_width / 2))
+        y_coordinate = int((screen_height / 2) - (self.window_height / 2))
+        self.geometry("{}x{}+{}+{}".format(self.window_width, self.window_height, x_coordinate, y_coordinate))
+
+        # Input text frame
+        self.input_frame = tk.Frame(self, name="input_frame", bg="#a4dade", width=500, height=self.window_height)
+        self.input_frame.grid(row=0, column=1)
+        self.input_frame.pack_propagate(False)
+        self.input_frame.configure(highlightthickness=3, highlightbackground="black")
+
+        # Info label
+        eu_date = self.date.split("-")
+        if int(eu_date[1]) < 10:
+            eu_date[1] = "0" + eu_date[1]
+        if int(eu_date[2]) < 10:
+            eu_date[2] = "0" + eu_date[2]
+
+        eu_date = f"{eu_date[2]}.{eu_date[1]}.{eu_date[0]}"
+
+        self.info_label = tk.Label(self.input_frame, name="info_label", bg="#4fb7bf", width=10, text=eu_date,
+                                   font=("Arial", 10, "bold"))
+        self.info_label.config(highlightthickness=2, highlightbackground="black")
+        self.info_label.pack(pady=5, padx=10, side=tk.LEFT)
+
+        # Events menu
+        self.selected_event = tk.StringVar(self, value="Select")
+        self.selected_event.trace("w", self.event_changed)
+
+        year_month = self.date.split("-")
+        year_month = f"{year_month[0]}-{year_month[1]}"
+        self.jsonpath = f"data/{year_month}.json"
+
+        with open(self.jsonpath, mode='r', encoding='utf-8') as jsonfile:
+            self.jsonfile = json.load(jsonfile)
+
+        self.options_list = []
+        i = 1
+        for event in self.jsonfile:
+            if event['date'] == f"{year_month}-{self.data_button['text']}":
+                self.options_list.append(f"{i}. {event['text']}")
+                i = i + 1
+        self.options_list.append("Remove All")
+
+        self.event_menu = tk.OptionMenu(self.input_frame, self.selected_event, *self.options_list)
+        self.event_menu.configure(font=("Arial", 8, "bold"), bg="gray", highlightbackground="black")
+        self.event_menu.pack(pady=5, padx=10, side=tk.RIGHT, expand=True)
+
+        # Confirm button
+        self.confirm_frame = tk.Frame(self, name="confirm_frame", bg="green", width=50, height=self.window_height)
+        self.confirm_frame.config(highlightthickness=2, highlightbackground="black")
+        self.confirm_frame.grid(row=0, column=2)
+        self.confirm_frame.pack_propagate(False)
+        self.confirm_button = tk.Button(self.confirm_frame, name="exit_button", text="-", font=("Arial", 20, "bold"),
+                                        bg="black", fg="white")
+        self.confirm_button.config(command=lambda: self.confirm(self.event_generate("<<Foo>>")), width=50,
+                                   height=self.window_height)
+        self.confirm_button.pack()
+
+        # Exit button
+        self.exit_frame = tk.Frame(self, name="exit_frame", bg="green", width=50, height=self.window_height)
+        self.exit_frame.config(highlightthickness=2, highlightbackground="black")
+        self.exit_frame.grid(row=0, column=3)
+        self.exit_frame.pack_propagate(False)
+        self.exit_button = tk.Button(self.exit_frame, name="exit_button", text="X", font=("Arial", 13, "bold"),
+                                     bg="black", fg="white")
+        self.exit_button.config(command=self.exit, width=50, height=self.window_height)
+        self.exit_button.pack()
+
+    def confirm(self, e):
+        if self.selected_event.get() == "Select":
+            # Nothing was selected
+            return
+
+        elif self.selected_event.get() == "Remove All":
+            # Remove everything 5 times because of weird bug
+            for i in range(5):
+                for event in self.jsonfile:
+                    if event['date'] == self.date:
+                        logging.warning(f'Removed event: {event}')
+                        self.jsonfile.remove(event)
+
+        else:
+            # One event was selected
+            text = self.selected_event.get().split(".")[1][1:]
+
+            for event in self.jsonfile:
+                if event['text'] == text:
+                    logging.warning(f'Removed event: {event}')
+                    self.jsonfile.remove(event)
+
+        # Save updated jsonfile
+        with open(self.jsonpath, mode="w", encoding="utf-8") as file:
+            json.dump(self.jsonfile, file)
+
+        # Remove file if empty
+        if not self.jsonfile:
+            os.remove(self.jsonpath)
+
         self.exit()
 
 
@@ -142,7 +283,7 @@ class App(tk.Tk):
 
                 for day_button in self.days_frame.winfo_children():
                     if all([int(day_button['text']) == day, self.month == month, self.year == year,
-                            day_button['state'] == "normal", day_button['background'] == "black"]):
+                            day_button['state'] == "normal"]):
                         day_button.configure(bg="#007FFF")
 
                 if forever:
@@ -152,6 +293,8 @@ class App(tk.Tk):
                     break
 
             except RuntimeError:
+                break
+            except tk.TclError:
                 break
 
     def update_days(self):
@@ -166,6 +309,9 @@ class App(tk.Tk):
             day_button.configure(text="")
             day_button['state'] = "normal"
             day_button.configure(bg="black")
+            day_button.unbind("<Enter>")
+            day_button.unbind("<Leave>")
+            day_button.unbind("<Button-3>")
 
         # Write days to buttons
         empty_days = {}
@@ -218,6 +364,7 @@ class App(tk.Tk):
                     if button.winfo_name() == event['button']:
                         button.bind("<Enter>", self.show_events)
                         button.bind("<Leave>", self.hide_events)
+                        button.bind("<Button-3>", self.remove_events)
 
                         if button.cget('bg') != "RED":
                             button.configure(bg=event['priority'])
@@ -293,7 +440,9 @@ class App(tk.Tk):
                 widget.configure(bg="green")
 
             # Show less details
-            self.details_frame.config(height=96)
+            self.details_frame.config(height=94)
+            self.detail_date_label.configure(bg="green")
+            self.detail_label.configure(bg="green")
 
             return
 
@@ -303,7 +452,7 @@ class App(tk.Tk):
 
         self.menu_frame.config(width=self.screen_width, height=30, bg="dark slate gray")
         self.main_frame.config(width=self.screen_width, height=self.screen_height)
-        self.main_frame.grid(pady=int((self.screen_height / 2) - (self.window_height / 2)))
+        self.main_frame.grid(pady=int((self.screen_height / 2) - (self.window_height / 2) - 100))
 
         self.main_frame.configure(bg="dark slate gray")
         for widget in self.main_frame.winfo_children():
@@ -311,6 +460,8 @@ class App(tk.Tk):
 
         # Show more details
         self.details_frame.config(height=200)
+        self.detail_date_label.configure(bg="dark slate gray")
+        self.detail_label.configure(bg="dark slate gray")
 
         return
 
@@ -346,26 +497,29 @@ class App(tk.Tk):
             "y": self.y_coordinate
         }
 
-        with open("config.json", mode="w", encoding="utf-8") as file:
+        with open("data/config.json", mode="w", encoding="utf-8") as file:
             json.dump(config, file)
 
+        logging.warning(f"New coordinates for startup: {config}")
+
     def read_position(self):
-        if not os.path.exists("config.json"):
-            print("Creating new config file")
+        # Create config file
+        if not os.path.exists("data/config.json"):
+            logging.warning("Creating new config file")
 
             config = {
                 "x": self.x_coordinate,
                 "y": self.y_coordinate
             }
 
-            with open("config.json", mode="w", encoding="utf-8") as file:
+            with open("data/config.json", mode="w", encoding="utf-8") as file:
                 json.dump(config, file)
 
         # Read coordinates from json file
-        with open("config.json", mode="r", encoding="utf-8") as file:
+        with open("data/config.json", mode="r", encoding="utf-8") as file:
             config = json.load(file)
 
-        print(config)
+        logging.warning(f"App started at coordinates: {config}")
         self.x_coordinate = config["x"]
         self.y_coordinate = config["y"]
         self.geometry(
@@ -403,7 +557,7 @@ class App(tk.Tk):
 
                     ready_text = ""
                     for i, text in enumerate(texts):
-                        if (i == 3):
+                        if i == 3:
                             ready_text += "...\n"
 
                         ready_text = ready_text + f"{i+1}. {text}\n"
@@ -411,27 +565,70 @@ class App(tk.Tk):
                     ready_text = ready_text[:-1]
 
                     eu_date = selected_date.split("-")
+                    if int(eu_date[1]) < 10:
+                        eu_date[1] = "0" + eu_date[1]
+                    if int(eu_date[2]) < 10:
+                        eu_date[2] = "0" + eu_date[2]
+
                     eu_date = f"{eu_date[2]}.{eu_date[1]}.{eu_date[0]}"
 
                     self.detail_date_label.configure(text=eu_date, bg="black", fg=button.cget("bg"))
                     self.detail_label.configure(text=ready_text, bg="black", fg=button.cget("bg"))
 
     def hide_events(self, event):
+        if self.attributes("-fullscreen"):
+            self.detail_date_label.configure(text="", bg="dark slate gray")
+            self.detail_label.configure(text="", bg="dark slate gray")
+            return
+
         self.detail_date_label.configure(text="", bg="green")
         self.detail_label.configure(text="", bg="green")
+        return
+
+    def remove_events(self, event):
+        button = event.widget
+        self.day = button.cget('text')
+
+        selected_date = f"{self.year}-{self.month}-{self.day}"
+        data = [selected_date, button]
+
+        self.remove_app = RemoveApp(data)
+        self.remove_app.mainloop()
 
     def exit(self):
         try:
             self.add_app.destroy()
-            self.destroy()
         except AttributeError:
-            self.destroy()
+            pass
         except tk.TclError:
-            self.destroy()
+            pass
+
+        try:
+            self.remove_app.destroy()
+        except AttributeError:
+            pass
+        except tk.TclError:
+            pass
+
+        logging.warning('Main App shutdown')
+        self.destroy()
 
     def __init__(self):
         super().__init__()
         self.add_app = None
+        self.remove_app = None
+
+        # Logger setup
+        if not os.path.isdir("data"):
+            os.makedirs("data")
+        logging.basicConfig(
+            filename="data/app.log",
+            encoding="utf-8",
+            filemode="a",
+            format="{asctime} - {levelname} - {message}",
+            style="{",
+            datefmt="%Y-%m-%d %H:%M",)
+        logging.warning('Main App start')
 
         # Initial
         self.title("To Do")
@@ -439,8 +636,8 @@ class App(tk.Tk):
         self.protocol("WM_DELETE_WINDOW", exit)
         self.overrideredirect(True)
         self.wm_attributes("-transparentcolor", "green")
-        # self.bind('<Leave>', self.lower_window)
         self.configure(bg='gray')
+        self.lower_window(self.event_generate("<<Foo>>"))
 
         self.window_width = 500
         self.window_height = 500
@@ -480,7 +677,7 @@ class App(tk.Tk):
 
         # Blank1 frame
         self.blank1_frame = tk.Frame(self.main_frame, name="blank1_frame", bg="green", width=self.window_width - 4,
-                                     height=30)
+                                     height=20)
         self.blank1_frame.grid(row=0, column=0)
         self.blank1_frame.pack_propagate(False)
 
@@ -495,7 +692,7 @@ class App(tk.Tk):
         self.back_button.config(command=lambda: self.change_month(-1), width=1, height=2)
         self.back_button.grid(row=0, column=0)
 
-        self.month_label = tk.Label(self.month_frame, name="month_label", text="Styczeń", font=("Arial", 15, "bold"))
+        self.month_label = tk.Label(self.month_frame, name="month_label", text="", font=("Arial", 15, "bold"))
         self.month_label.config(bg="black", fg="white", width=15, height=2)
         self.month_label.config(highlightthickness=1, highlightbackground="gray")
         self.month_label.grid(row=0, column=1)
@@ -512,14 +709,24 @@ class App(tk.Tk):
 
         # Blank2 frame
         self.blank2_frame = tk.Frame(self.main_frame, name="blank2_frame", bg="green", width=self.window_width - 4,
-                                     height=25)
+                                     height=20)
         self.blank2_frame.grid(row=2, column=0)
         self.blank2_frame.pack_propagate(False)
 
+        # Weekdays frame
+        self.weekdays_frame = tk.Frame(self.main_frame, name="weekdays_frame", bg="black")
+        self.weekdays_frame.grid(row=3, column=0)
+
+        self.weekdays = ['pon', 'wto', 'śro', 'czw', 'pią', 'sob', 'nie']
+        for i, weekday in enumerate(self.weekdays):
+            self.weekday_label = tk.Label(self.weekdays_frame, name=f"weekday{i}_label", width=7, height=1,
+                                          font=("Arial", 8, "bold"), bg="#28231D", fg="gray", text=weekday)
+            self.weekday_label.config(highlightthickness=2, highlightbackground="black")
+            self.weekday_label.grid(row=0, column=i)
+
         # Days frame
-        self.days_frame = tk.Frame(self.main_frame, name="days_frame", bg="red")
-        self.days_frame.grid(row=3, column=0)
-        self.days_frame.pack_propagate(False)
+        self.days_frame = tk.Frame(self.main_frame, name="days_frame", bg="green")
+        self.days_frame.grid(row=4, column=0)
 
         for i in range(42):
             self.day_button = tk.Button(self.days_frame, name=f"day{i}_button", width=7, height=2,
@@ -530,15 +737,15 @@ class App(tk.Tk):
 
         # Blank3 frame
         self.blank3_frame = tk.Frame(self.main_frame, name="blank3_frame", bg="green", width=self.window_width - 4,
-                                     height=25)
-        self.blank3_frame.grid(row=4, column=0)
+                                     height=20)
+        self.blank3_frame.grid(row=5, column=0)
         self.blank3_frame.pack_propagate(False)
 
         # Details frame
         self.details_frame = tk.Frame(self.main_frame, name="details_frame", bg="green", width=self.window_width - 4,
-                                     height=96)
+                                     height=94)
         self.details_frame.config(highlightthickness=2, highlightbackground="black")
-        self.details_frame.grid(row=5, column=0)
+        self.details_frame.grid(row=6, column=0)
         self.details_frame.pack_propagate(False)
 
         self.detail_date_label = tk.Label(self.details_frame, name="detail_date_label",
