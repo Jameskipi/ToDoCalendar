@@ -5,7 +5,7 @@ import json
 from datetime import date, datetime
 from calendar import monthcalendar, monthrange
 from threading import Thread
-import Logger
+import AppLogs
 from StartingApp import StartingApp
 from AddApp import AddApp
 from RemoveApp import RemoveApp
@@ -19,7 +19,7 @@ class App(tk.Tk):
                 self.state()
 
                 if datetime.now().hour == 0 and datetime.now().minute == 0:
-                    Logger.warning("MIDNIGHT DATE UPDATE")
+                    AppLogs.warning("MIDNIGHT DATE UPDATE")
                     self.update_days()
                     time.sleep(60)
                 else:
@@ -244,12 +244,12 @@ class App(tk.Tk):
         with open("data/config.json", mode="w", encoding="utf-8") as file:
             json.dump(config, file)
 
-        Logger.warning(f"New coordinates for startup: {config}")
+        AppLogs.warning(f"New coordinates for startup: {config}")
 
     def read_position(self):
         # Create config file
         if not os.path.exists("data/config.json"):
-            Logger.warning("Creating new config file")
+            AppLogs.warning("Creating new config file")
 
             config = {
                 "x": self.x_coordinate,
@@ -263,7 +263,7 @@ class App(tk.Tk):
         with open("data/config.json", mode="r", encoding="utf-8") as file:
             config = json.load(file)
 
-        Logger.warning(f"Main App started at coordinates: {config}")
+        AppLogs.warning(f"Main App started at coordinates: {config}")
         self.x_coordinate = config["x"]
         self.y_coordinate = config["y"]
         self.geometry(
@@ -354,7 +354,7 @@ class App(tk.Tk):
         except tk.TclError:
             pass
 
-        Logger.warning('Main App shutdown')
+        AppLogs.warning('Main App shutdown')
         self.destroy()
 
     def __init__(self):
@@ -364,7 +364,7 @@ class App(tk.Tk):
         self.popup = None
 
         # Logger setup
-        Logger.start()
+        AppLogs.start()
 
         # Popup window with important dates
         self.popup = StartingApp()

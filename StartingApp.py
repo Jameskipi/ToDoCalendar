@@ -1,7 +1,7 @@
 import tkinter as tk
 from datetime import date, timedelta, datetime
 import json
-import Logger
+import AppLogs
 
 
 class StartingApp(tk.Toplevel):
@@ -24,14 +24,14 @@ class StartingApp(tk.Toplevel):
             with open(current_json_path, mode='r', encoding='utf-8') as file:
                 current_json = json.load(file)
         except FileNotFoundError:
-            Logger.error("StartingApp: No events found this month")
+            AppLogs.error("StartingApp: No events found this month")
             current_json = []
 
         try:
             with open(next_json_path, mode='r', encoding='utf-8') as file:
                 next_json = json.load(file)
         except FileNotFoundError:
-            Logger.error("StartingApp: No events found in the next month")
+            AppLogs.error("StartingApp: No events found in the next month")
             next_json = []
 
         # Every event left in this month

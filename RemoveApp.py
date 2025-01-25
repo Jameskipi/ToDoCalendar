@@ -1,7 +1,7 @@
 import tkinter as tk
 import json
 import os
-import Logger
+import AppLogs
 
 
 class RemoveApp(tk.Toplevel):
@@ -116,7 +116,7 @@ class RemoveApp(tk.Toplevel):
             for i in range(5):
                 for event in self.jsonfile:
                     if event['date'] == self.date:
-                        Logger.warning(f'Removed event: {event}')
+                        AppLogs.warning(f'Removed event: {event}')
                         self.jsonfile.remove(event)
 
         else:
@@ -125,7 +125,7 @@ class RemoveApp(tk.Toplevel):
 
             for event in self.jsonfile:
                 if event['text'] == text:
-                    Logger.warning(f'Removed event: {event}')
+                    AppLogs.warning(f'Removed event: {event}')
                     self.jsonfile.remove(event)
 
         # Save updated jsonfile

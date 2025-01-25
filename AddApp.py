@@ -1,7 +1,7 @@
 import tkinter as tk
 import os
 import json
-import Logger
+import AppLogs
 
 
 class AddApp(tk.Toplevel):
@@ -127,6 +127,6 @@ class AddApp(tk.Toplevel):
             feeds.append(data)
             json.dump(feeds, file)
 
-        Logger.warning(f'Added new event: {data}')
+        AppLogs.warning(f'Added new event: {data}')
 
         self.exit()
