@@ -52,7 +52,7 @@ class StartingApp(tk.Toplevel):
 
         # Every event in the next 7 days
         start_date = date.today()
-        end_date = date.today() + timedelta(days=7)
+        end_date = date.today() + timedelta(days=8)
 
         next_week = []
         while start_date != end_date:
@@ -528,25 +528,18 @@ class RemoveApp(tk.Tk):
 
 
 class App(tk.Tk):
-    def update_today(self, forever=False):
-        # Update date every second
+    def update_midnight(self):
+        # Update date on midnight
         while True:
             try:
-                raw_date = str(date.today()).split("-")
-                year = int(raw_date[0])
-                month = int(raw_date[1])
-                day = int(raw_date[2])
+                self.state()
 
-                for day_button in self.days_frame.winfo_children():
-                    if all([int(day_button['text']) == day, self.month == month, self.year == year,
-                            day_button['state'] == "normal"]):
-                        day_button.configure(bg="#007FFF")
-
-                if forever:
-                    time.sleep(1)
-                    continue
+                if datetime.now().hour == 0 and datetime.now().minute == 0:
+                    logging.warning("MIDNIGHT DATE UPDATE")
+                    self.update_days()
+                    time.sleep(60)
                 else:
-                    break
+                    time.sleep(1)
 
             except RuntimeError:
                 break
@@ -625,7 +618,16 @@ class App(tk.Tk):
                         if button.cget('bg') != "RED":
                             button.configure(bg=event['priority'])
 
-        self.update_today()
+        # Show current day
+        raw_date = str(date.today()).split("-")
+        year = int(raw_date[0])
+        month = int(raw_date[1])
+        day = int(raw_date[2])
+
+        for day_button in self.days_frame.winfo_children():
+            if all([int(day_button['text']) == day, self.month == month, self.year == year,
+                    day_button['state'] == "normal"]):
+                day_button.configure(bg="#007FFF")
 
     def change_month(self, add_number):
         def translate_month(number):
@@ -1022,8 +1024,8 @@ class App(tk.Tk):
         self.day = 0
         self.change_month(0)
 
-        # Dynamic date update
-        Thread(target=lambda: self.update_today(True)).start()
+        # Date update on midnight
+        Thread(target=self.update_midnight).start()
 
 
 if __name__ == "__main__":
