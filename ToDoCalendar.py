@@ -113,8 +113,6 @@ class App(tk.Tk):
                     day_button['state'] == "normal"]):
                 day_button.configure(bg="#007FFF")
 
-        print("Days updated")
-
     def change_month(self, add_number):
         def translate_month(number):
             match number:

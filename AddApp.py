@@ -120,9 +120,24 @@ class AddApp(tk.Toplevel):
             with open(path, mode="w", encoding="utf-8") as file:
                 json.dump([], file)
 
+        # Read events from file
         with open(path, mode='r', encoding='utf-8') as feedsjson:
             feeds = json.load(feedsjson)
 
+        # Check if the same event exists already
+        for event in feeds:
+            if text == event['text'] and data['date'] == event['date']:
+                AppLogs.error(f"Tried to add event that already exists ({text})")
+
+                if text.startswith(f"{text[:-4]} (") and text[-1] == ")":
+                    new_number = int(text[-2]) + 1
+                    self.input_entry.delete(0, tk.END)
+                    self.input_entry.insert(tk.END, f"{text[:-4]} ({new_number})")
+                else:
+                    self.input_entry.insert(tk.END, f" (1)")
+                return
+
+        # Save new events
         with open(path, mode="w", encoding="utf-8") as file:
             feeds.append(data)
             json.dump(feeds, file)
