@@ -2,529 +2,13 @@ import time
 import tkinter as tk
 import os
 import json
-import logging
-from datetime import date, timedelta, datetime
+from datetime import date, datetime
 from calendar import monthcalendar, monthrange
 from threading import Thread
-
-
-class StartingApp(tk.Toplevel):
-    def get_events(self):
-        raw_date = str(date.today()).split("-")
-        year = int(raw_date[0])
-        month = int(raw_date[1])
-        day = int(raw_date[2])
-
-        # Paths
-        current_json_path = f"data/{year}-{month}.json"
-
-        if month + 1 > 12:
-            next_json_path = f"data/{year+1}-1.json"
-        else:
-            next_json_path = f"data/{year}-{month + 1}.json"
-
-        # Json files
-        try:
-            with open(current_json_path, mode='r', encoding='utf-8') as file:
-                current_json = json.load(file)
-        except FileNotFoundError:
-            logging.error("StartingApp: No events found this month")
-            current_json = []
-
-        try:
-            with open(next_json_path, mode='r', encoding='utf-8') as file:
-                next_json = json.load(file)
-        except FileNotFoundError:
-            logging.error("StartingApp: No events found in the next month")
-            next_json = []
-
-        # Every event left in this month
-        for event in current_json:
-            date_fixed = event['date'].split("-")
-            date_fixed = date(int(date_fixed[0]), int(date_fixed[1]), int(date_fixed[2]))
-
-            if date_fixed > date.today():
-                self.current_month_events.append(event)
-
-        # Every event in the next month
-        for event in next_json:
-            self.next_month_events.append(event)
-
-        # Every event in the next 7 days
-        start_date = date.today()
-        end_date = date.today() + timedelta(days=8)
-
-        next_week = []
-        while start_date != end_date:
-            next_week.append(start_date)
-            start_date = start_date + timedelta(days=1)
-
-        this_month = []
-        next_month = []
-        for event_day in next_week:
-            if event_day.month == date.today().month:
-                this_month.append(f"{event_day.year}-{event_day.month}-{event_day.day}")
-            else:
-                next_month.append(f"{event_day.year}-{event_day.month}-{event_day.day}")
-
-        # Update next week events
-        for event in current_json:
-            for event_day in this_month:
-                if str(event_day) == event['date']:
-                    self.next_week_events.append(event)
-
-        for event in next_json:
-            for event_day in next_month:
-                if str(event_day) == event['date']:
-                    self.next_week_events.append(event)
-
-    def show_events(self, option):
-        events = []
-
-        # Clear all events
-        for label in self.left_frame.winfo_children():
-            label.configure(text="", bg="gray", fg="white")
-            label.configure(highlightbackground="gray")
-
-        for label in self.right_frame.winfo_children():
-            label.configure(text="", bg="gray", fg="white")
-            label.configure(highlightbackground="gray")
-
-        match option:
-            case -1:
-                events = self.current_month_events
-
-                self.current_month_label.configure(fg="white")
-                self.next_week_label.configure(fg="gray")
-                self.next_month_label.configure(fg="gray")
-            case 0:
-                events = self.next_week_events
-
-                self.current_month_label.configure(fg="gray")
-                self.next_week_label.configure(fg="white")
-                self.next_month_label.configure(fg="gray")
-            case 1:
-                events = self.next_month_events
-
-                self.current_month_label.configure(fg="gray")
-                self.next_week_label.configure(fg="gray")
-                self.next_month_label.configure(fg="white")
-
-        # Sort events
-        events.sort(key=lambda x: datetime.strptime(x['date'], '%Y-%m-%d'))
-
-        if len(events) > 15:
-            # Show right frame
-            self.right_frame.grid(row=0, column=1)
-            self.left_frame.configure(width=343)
-        else:
-            # Hide right frame
-            self.right_frame.grid_forget()
-            self.left_frame.configure(width=680)
-
-        for i, label in enumerate(self.left_frame.winfo_children()):
-            try:
-                eu_date = events[i]['date'].split("-")
-                if int(eu_date[1]) < 10:
-                    eu_date[1] = "0" + eu_date[1]
-                if int(eu_date[2]) < 10:
-                    eu_date[2] = "0" + eu_date[2]
-
-                eu_date = f"{eu_date[2]}.{eu_date[1]}.{eu_date[0]}"
-
-                text = f"{eu_date}   -   {events[i]['text']}"
-                label.configure(text=text, bg="dark slate gray")
-                label.configure(highlightbackground="black")
-
-                if events[i]['priority'] == "RED":
-                    label.configure(fg="red")
-
-            except IndexError:
-                continue
-
-        if len(events) > 15:
-            i = 15
-            for label in self.right_frame.winfo_children():
-                try:
-                    eu_date = events[i]['date'].split("-")
-                    if int(eu_date[1]) < 10:
-                        eu_date[1] = "0" + eu_date[1]
-                    if int(eu_date[2]) < 10:
-                        eu_date[2] = "0" + eu_date[2]
-
-                    eu_date = f"{eu_date[2]}.{eu_date[1]}.{eu_date[0]}"
-
-                    text = f"{eu_date}   -   {events[i]['text']}"
-                    label.configure(text=text, bg="dark slate gray")
-                    label.configure(highlightbackground="black")
-
-                    if events[i]['priority'] == "RED":
-                        label.configure(fg="red")
-
-                    i = i + 1
-
-                except IndexError:
-                    continue
-
-    def __init__(self):
-        super().__init__()
-        self.current_month_events = []
-        self.next_month_events = []
-        self.next_week_events = []
-
-        # Initial
-        self.title("Important dates")
-        self.resizable(False, False)
-        self.wm_attributes("-transparentcolor", "green")
-        self.overrideredirect(True)
-        self.configure(bg='gray')
-        self.config(highlightthickness=5, highlightbackground="black")
-        self.lift()
-        self.attributes("-topmost", True)
-
-        self.window_width = 700
-        self.window_height = 700
-        self.screen_width = self.winfo_screenwidth()
-        self.screen_height = self.winfo_screenheight()
-        self.x_coordinate = int((self.screen_width / 2) - (self.window_width / 2))
-        self.y_coordinate = int((self.screen_height / 2) - (self.window_height / 2))
-        self.geometry("{}x{}+{}+{}".format(self.window_width, self.window_height, self.x_coordinate, self.y_coordinate))
-        self.geometry(
-            "{}x{}+{}+{}".format(self.window_width, self.window_height, self.x_coordinate, self.y_coordinate))
-
-        # Update events
-        self.get_events()
-
-        # Menu frame
-        self.menu_frame = tk.Frame(self, name="menu_frame", bg="dark slate gray", width=self.window_width - 10, height=50)
-        self.menu_frame.config(highlightthickness=2, highlightbackground="black")
-        self.menu_frame.grid(row=0, column=0)
-        self.menu_frame.pack_propagate(False)
-
-        # Current month
-        self.current_month_label = tk.Button(self.menu_frame, name="current_month_label", text="Ten miesiąc",
-                                          font=("Arial", 13, "bold"), bg="black", fg="white", width=14)
-        self.current_month_label.configure(command=lambda: self.show_events(-1))
-        self.current_month_label.pack(side=tk.LEFT, padx=58, anchor=tk.CENTER)
-
-        # Next 7 days button
-        self.next_week_label = tk.Button(self.menu_frame, name="next_week_label", text="Najbliższe 7 dni",
-                                    font=("Arial", 13, "bold"), bg="black", fg="white", width=14)
-        self.next_week_label.configure(command=lambda: self.show_events(0))
-        self.next_week_label.pack(side=tk.LEFT, anchor=tk.CENTER)
-
-        # Next month
-        self.next_month_label = tk.Button(self.menu_frame, name="next_month_label", text="Następny miesiąc",
-                                    font=("Arial", 13, "bold"), bg="black", fg="white", width=14)
-        self.next_month_label.configure(command=lambda: self.show_events(1))
-        self.next_month_label.pack(side=tk.LEFT, padx=58, anchor=tk.CENTER)
-
-        # Main frame
-        self.main_frame = tk.Frame(self, name="main_frame", bg="gray", width=self.window_width - 10, height=600)
-        self.main_frame.config(highlightthickness=2, highlightbackground="black")
-        self.main_frame.grid(row=1, column=0)
-        self.main_frame.grid_propagate(False)
-
-        # Left main frame
-        self.left_frame = tk.Frame(self.main_frame, name="left_frame", bg="gray", width=343, height=596)
-        self.left_frame.grid(row=0, column=0)
-        self.left_frame.pack_propagate(False)
-
-        # Right main frame
-        self.right_frame = tk.Frame(self.main_frame, name="right_frame", bg="gray", width=343, height=596)
-        self.right_frame.grid(row=0, column=1)
-        self.right_frame.pack_propagate(False)
-
-        # Dates label
-        for i in range(15):
-            self.date_label = tk.Label(self.left_frame, name=f"date{i}_label", font=("Arial", 8, "bold"),
-                                         bg="dark slate gray", fg="white")
-            self.date_label.config(highlightthickness=2, highlightbackground="black")
-            self.date_label.pack(pady=7)
-
-        for i in range(15, 30):
-            self.date_label = tk.Label(self.right_frame, name=f"date{i}_label", font=("Arial", 8, "bold"),
-                                         bg="dark slate gray", fg="white")
-            self.date_label.config(highlightthickness=2, highlightbackground="black")
-            self.date_label.pack(pady=7)
-
-        # Confirmation frame
-        self.exit_frame = tk.Frame(self, name="exit_frame", bg="dark slate gray", width=self.window_width - 10, height=40)
-        self.exit_frame.config(highlightthickness=2, highlightbackground="black")
-        self.exit_frame.grid(row=2, column=0)
-        self.exit_frame.pack_propagate(False)
-
-        # Confirm button
-        self.exit_button = tk.Button(self.exit_frame, name="exit_button", text="OK", font=("Arial", 13, "bold"),
-                                     bg="black", fg="white")
-        self.exit_button.config(command=self.destroy, width=5)
-        self.exit_button.pack(side=tk.TOP, anchor=tk.CENTER, pady=1)
-
-        # Start at next 7 days
-        self.show_events(0)
-
-
-class AddApp(tk.Tk):
-    def exit(self):
-        self.data_button.configure(bg="black", fg="white")
-        app.update_days()
-        self.destroy()
-
-    def priority_changed(self, *args):
-        selected = self.priority.get()
-
-        if selected == "RED":
-            self.priority_menu.configure(bg="red")
-        elif selected == "GRAY":
-            self.priority_menu.configure(bg="gray")
-
-    def __init__(self, data):
-        super().__init__()
-
-        self.data = data
-        self.date = data[0]
-        self.data_button = data[1]
-        self.data_button.configure(bg="light gray", fg="black")
-
-        # Initial
-        self.title("To Do")
-        self.resizable(False, False)
-        self.overrideredirect(True)
-        self.wm_attributes("-transparentcolor", "green")
-        self.lift()
-        self.attributes("-topmost", True)
-
-        self.window_width = 600
-        self.window_height = 50
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
-        x_coordinate = int((screen_width / 2) - (self.window_width / 2))
-        y_coordinate = int((screen_height / 2) - (self.window_height / 2))
-        self.geometry("{}x{}+{}+{}".format(self.window_width, self.window_height, x_coordinate, y_coordinate))
-
-        # Input text frame
-        self.input_frame = tk.Frame(self, name="input_frame", bg="#a4dade", width=500, height=self.window_height)
-        self.input_frame.grid(row=0, column=1)
-        self.input_frame.pack_propagate(False)
-        self.input_frame.configure(highlightthickness=3, highlightbackground="black")
-
-        # Info label
-        eu_date = self.date.split("-")
-        if int(eu_date[1]) < 10:
-            eu_date[1] = "0" + eu_date[1]
-        if int(eu_date[2]) < 10:
-            eu_date[2] = "0" + eu_date[2]
-
-        eu_date = f"{eu_date[2]}.{eu_date[1]}.{eu_date[0]}"
-
-        self.info_label = tk.Label(self.input_frame, name="info_label", bg="#4fb7bf", width=10, text=eu_date,
-                                   font=("Arial", 10, "bold"))
-        self.info_label.config(highlightthickness=2, highlightbackground="black")
-        self.info_label.pack(pady=5, padx=10, side=tk.LEFT)
-
-        # Input text
-        self.input_entry = tk.Entry(self.input_frame, font=("Arial", 10, "bold"))
-        self.input_entry.configure(width=40)
-        self.input_entry.pack(pady=5, side=tk.LEFT)
-        self.input_entry.focus_force()
-        self.input_entry.bind("<Return>", self.confirm)
-
-        # Priority menu
-        self.priority = tk.StringVar(self, value="GRAY")
-        self.priority.trace("w", self.priority_changed)
-
-        self.priority_menu = tk.OptionMenu(self.input_frame, self.priority, "RED", "GRAY")
-        self.priority_menu.configure(font=("Arial", 8, "bold"), bg="gray", highlightbackground="black")
-        self.priority_menu.pack(pady=5, padx=10, side=tk.LEFT)
-
-        # Confirm button
-        self.confirm_frame = tk.Frame(self, name="confirm_frame", bg="green", width=50, height=self.window_height)
-        self.confirm_frame.config(highlightthickness=2, highlightbackground="black")
-        self.confirm_frame.grid(row=0, column=2)
-        self.confirm_frame.pack_propagate(False)
-        self.confirm_button = tk.Button(self.confirm_frame, name="exit_button", text="+", font=("Arial", 13, "bold"),
-                                        bg="black", fg="white")
-        self.confirm_button.config(command=lambda: self.confirm(self.event_generate("<<Foo>>")), width=50,
-                                   height=self.window_height)
-        self.confirm_button.pack()
-
-        # Exit button
-        self.exit_frame = tk.Frame(self, name="exit_frame", bg="green", width=50, height=self.window_height)
-        self.exit_frame.config(highlightthickness=2, highlightbackground="black")
-        self.exit_frame.grid(row=0, column=3)
-        self.exit_frame.pack_propagate(False)
-        self.exit_button = tk.Button(self.exit_frame, name="exit_button", text="X", font=("Arial", 13, "bold"),
-                                     bg="black", fg="white")
-        self.exit_button.config(command=self.exit, width=50, height=self.window_height)
-        self.exit_button.pack()
-
-    def confirm(self, e):
-        text = self.input_entry.get()
-
-        if text == "":
-            return
-
-        data = {
-            "date": self.date,
-            "button": self.data_button.winfo_name(),
-            "text": text,
-            "priority": self.priority.get()
-        }
-
-        year_month = self.date.split("-")
-        year_month = f"{year_month[0]}-{year_month[1]}"
-
-        path = f"data/{year_month}.json"
-
-        if not os.path.isfile(path):
-            with open(path, mode="w", encoding="utf-8") as file:
-                json.dump([], file)
-
-        with open(path, mode='r', encoding='utf-8') as feedsjson:
-            feeds = json.load(feedsjson)
-
-        with open(path, mode="w", encoding="utf-8") as file:
-            feeds.append(data)
-            json.dump(feeds, file)
-
-        logging.warning(f'Added new event: {data}')
-
-        self.exit()
-
-
-class RemoveApp(tk.Tk):
-    def exit(self):
-        self.data_button.configure(bg="black", fg="white")
-        app.update_days()
-        self.destroy()
-
-    def event_changed(self, *args):
-        selected = self.selected_event.get()
-
-        if selected == "Remove All":
-            self.event_menu.configure(bg="red")
-        else:
-            self.event_menu.configure(bg="gray")
-
-    def __init__(self, data):
-        super().__init__()
-
-        self.data = data
-        self.date = data[0]
-        self.data_button = data[1]
-        self.data_button.configure(bg="light gray", fg="black")
-
-        # Initial
-        self.title("To Do")
-        self.resizable(False, False)
-        self.overrideredirect(True)
-        self.wm_attributes("-transparentcolor", "green")
-        self.lift()
-        self.attributes("-topmost", True)
-
-        self.window_width = 600
-        self.window_height = 50
-        screen_width = self.winfo_screenwidth()
-        screen_height = self.winfo_screenheight()
-        x_coordinate = int((screen_width / 2) - (self.window_width / 2))
-        y_coordinate = int((screen_height / 2) - (self.window_height / 2))
-        self.geometry("{}x{}+{}+{}".format(self.window_width, self.window_height, x_coordinate, y_coordinate))
-
-        # Input text frame
-        self.input_frame = tk.Frame(self, name="input_frame", bg="#a4dade", width=500, height=self.window_height)
-        self.input_frame.grid(row=0, column=1)
-        self.input_frame.pack_propagate(False)
-        self.input_frame.configure(highlightthickness=3, highlightbackground="black")
-
-        # Info label
-        eu_date = self.date.split("-")
-        if int(eu_date[1]) < 10:
-            eu_date[1] = "0" + eu_date[1]
-        if int(eu_date[2]) < 10:
-            eu_date[2] = "0" + eu_date[2]
-
-        eu_date = f"{eu_date[2]}.{eu_date[1]}.{eu_date[0]}"
-
-        self.info_label = tk.Label(self.input_frame, name="info_label", bg="#4fb7bf", width=10, text=eu_date,
-                                   font=("Arial", 10, "bold"))
-        self.info_label.config(highlightthickness=2, highlightbackground="black")
-        self.info_label.pack(pady=5, padx=10, side=tk.LEFT)
-
-        # Events menu
-        self.selected_event = tk.StringVar(self, value="Select")
-        self.selected_event.trace("w", self.event_changed)
-
-        year_month = self.date.split("-")
-        year_month = f"{year_month[0]}-{year_month[1]}"
-        self.jsonpath = f"data/{year_month}.json"
-
-        with open(self.jsonpath, mode='r', encoding='utf-8') as jsonfile:
-            self.jsonfile = json.load(jsonfile)
-
-        self.options_list = []
-        i = 1
-        for event in self.jsonfile:
-            if event['date'] == f"{year_month}-{self.data_button['text']}":
-                self.options_list.append(f"{i}. {event['text']}")
-                i = i + 1
-        self.options_list.append("Remove All")
-
-        self.event_menu = tk.OptionMenu(self.input_frame, self.selected_event, *self.options_list)
-        self.event_menu.configure(font=("Arial", 8, "bold"), bg="gray", highlightbackground="black")
-        self.event_menu.pack(pady=5, padx=10, side=tk.RIGHT, expand=True)
-
-        # Confirm button
-        self.confirm_frame = tk.Frame(self, name="confirm_frame", bg="green", width=50, height=self.window_height)
-        self.confirm_frame.config(highlightthickness=2, highlightbackground="black")
-        self.confirm_frame.grid(row=0, column=2)
-        self.confirm_frame.pack_propagate(False)
-        self.confirm_button = tk.Button(self.confirm_frame, name="exit_button", text="-", font=("Arial", 20, "bold"),
-                                        bg="black", fg="white")
-        self.confirm_button.config(command=lambda: self.confirm(self.event_generate("<<Foo>>")), width=50,
-                                   height=self.window_height)
-        self.confirm_button.pack()
-
-        # Exit button
-        self.exit_frame = tk.Frame(self, name="exit_frame", bg="green", width=50, height=self.window_height)
-        self.exit_frame.config(highlightthickness=2, highlightbackground="black")
-        self.exit_frame.grid(row=0, column=3)
-        self.exit_frame.pack_propagate(False)
-        self.exit_button = tk.Button(self.exit_frame, name="exit_button", text="X", font=("Arial", 13, "bold"),
-                                     bg="black", fg="white")
-        self.exit_button.config(command=self.exit, width=50, height=self.window_height)
-        self.exit_button.pack()
-
-    def confirm(self, e):
-        if self.selected_event.get() == "Select":
-            # Nothing was selected
-            return
-
-        elif self.selected_event.get() == "Remove All":
-            # Remove everything 5 times because of weird bug
-            for i in range(5):
-                for event in self.jsonfile:
-                    if event['date'] == self.date:
-                        logging.warning(f'Removed event: {event}')
-                        self.jsonfile.remove(event)
-
-        else:
-            # One event was selected
-            text = self.selected_event.get().split(".")[1][1:]
-
-            for event in self.jsonfile:
-                if event['text'] == text:
-                    logging.warning(f'Removed event: {event}')
-                    self.jsonfile.remove(event)
-
-        # Save updated jsonfile
-        with open(self.jsonpath, mode="w", encoding="utf-8") as file:
-            json.dump(self.jsonfile, file)
-
-        # Remove file if empty
-        if not self.jsonfile:
-            os.remove(self.jsonpath)
-
-        self.exit()
+import Logger
+from StartingApp import StartingApp
+from AddApp import AddApp
+from RemoveApp import RemoveApp
 
 
 class App(tk.Tk):
@@ -535,7 +19,7 @@ class App(tk.Tk):
                 self.state()
 
                 if datetime.now().hour == 0 and datetime.now().minute == 0:
-                    logging.warning("MIDNIGHT DATE UPDATE")
+                    Logger.warning("MIDNIGHT DATE UPDATE")
                     self.update_days()
                     time.sleep(60)
                 else:
@@ -628,6 +112,8 @@ class App(tk.Tk):
             if all([int(day_button['text']) == day, self.month == month, self.year == year,
                     day_button['state'] == "normal"]):
                 day_button.configure(bg="#007FFF")
+
+        print("Days updated")
 
     def change_month(self, add_number):
         def translate_month(number):
@@ -758,12 +244,12 @@ class App(tk.Tk):
         with open("data/config.json", mode="w", encoding="utf-8") as file:
             json.dump(config, file)
 
-        logging.warning(f"New coordinates for startup: {config}")
+        Logger.warning(f"New coordinates for startup: {config}")
 
     def read_position(self):
         # Create config file
         if not os.path.exists("data/config.json"):
-            logging.warning("Creating new config file")
+            Logger.warning("Creating new config file")
 
             config = {
                 "x": self.x_coordinate,
@@ -777,7 +263,7 @@ class App(tk.Tk):
         with open("data/config.json", mode="r", encoding="utf-8") as file:
             config = json.load(file)
 
-        logging.warning(f"Main App started at coordinates: {config}")
+        Logger.warning(f"Main App started at coordinates: {config}")
         self.x_coordinate = config["x"]
         self.y_coordinate = config["y"]
         self.geometry(
@@ -868,7 +354,7 @@ class App(tk.Tk):
         except tk.TclError:
             pass
 
-        logging.warning('Main App shutdown')
+        Logger.warning('Main App shutdown')
         self.destroy()
 
     def __init__(self):
@@ -878,16 +364,7 @@ class App(tk.Tk):
         self.popup = None
 
         # Logger setup
-        if not os.path.isdir("data"):
-            os.makedirs("data")
-        logging.basicConfig(
-            filename="data/app.log",
-            encoding="utf-8",
-            filemode="a",
-            format="{asctime} - {levelname} - {message}",
-            style="{",
-            datefmt="%Y-%m-%d %H:%M",)
-        logging.warning('Main App start')
+        Logger.start()
 
         # Popup window with important dates
         self.popup = StartingApp()
