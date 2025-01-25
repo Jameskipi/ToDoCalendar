@@ -183,8 +183,8 @@ class App(tk.Tk):
 
             # Show less details
             self.details_frame.config(height=94)
-            self.detail_date_label.configure(bg="green")
-            self.detail_label.configure(bg="green")
+            self.detail_date_label.configure(bg="green", font=("Arial", 12, "bold"))
+            self.detail_label.configure(bg="green", font=("Arial", 9, "bold"))
 
             return
 
@@ -201,9 +201,9 @@ class App(tk.Tk):
             widget.configure(bg="dark slate gray")
 
         # Show more details
-        self.details_frame.config(height=200)
-        self.detail_date_label.configure(bg="dark slate gray")
-        self.detail_label.configure(bg="dark slate gray")
+        self.details_frame.config(height=300)
+        self.detail_date_label.configure(bg="dark slate gray", font=("Arial", 15, "bold"))
+        self.detail_label.configure(bg="dark slate gray", font=("Arial", 12, "bold"))
 
         return
 

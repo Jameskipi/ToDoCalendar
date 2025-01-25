@@ -18,6 +18,38 @@ class RemoveApp(tk.Toplevel):
         else:
             self.event_menu.configure(bg="gray")
 
+    def confirm(self, e):
+        if self.selected_event.get() == "Select":
+            # Nothing was selected
+            return
+
+        elif self.selected_event.get() == "Remove All":
+            # Remove everything 5 times because of weird bug
+            for i in range(5):
+                for event in self.jsonfile:
+                    if event['date'] == self.date:
+                        AppLogs.warning(f'Removed event: {event}')
+                        self.jsonfile.remove(event)
+
+        else:
+            # One event was selected
+            text = self.selected_event.get().split(".")[1][1:]
+
+            for event in self.jsonfile:
+                if event['text'] == text:
+                    AppLogs.warning(f'Removed event: {event}')
+                    self.jsonfile.remove(event)
+
+        # Save updated jsonfile
+        with open(self.jsonpath, mode="w", encoding="utf-8") as file:
+            json.dump(self.jsonfile, file)
+
+        # Remove file if empty
+        if not self.jsonfile:
+            os.remove(self.jsonpath)
+
+        self.exit()
+
     def __init__(self, data):
         super().__init__()
 
@@ -105,35 +137,3 @@ class RemoveApp(tk.Toplevel):
                                      bg="black", fg="white")
         self.exit_button.config(command=self.exit, width=50, height=self.window_height)
         self.exit_button.pack()
-
-    def confirm(self, e):
-        if self.selected_event.get() == "Select":
-            # Nothing was selected
-            return
-
-        elif self.selected_event.get() == "Remove All":
-            # Remove everything 5 times because of weird bug
-            for i in range(5):
-                for event in self.jsonfile:
-                    if event['date'] == self.date:
-                        AppLogs.warning(f'Removed event: {event}')
-                        self.jsonfile.remove(event)
-
-        else:
-            # One event was selected
-            text = self.selected_event.get().split(".")[1][1:]
-
-            for event in self.jsonfile:
-                if event['text'] == text:
-                    AppLogs.warning(f'Removed event: {event}')
-                    self.jsonfile.remove(event)
-
-        # Save updated jsonfile
-        with open(self.jsonpath, mode="w", encoding="utf-8") as file:
-            json.dump(self.jsonfile, file)
-
-        # Remove file if empty
-        if not self.jsonfile:
-            os.remove(self.jsonpath)
-
-        self.exit()

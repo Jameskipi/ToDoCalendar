@@ -1,4 +1,5 @@
 import tkinter as tk
+import tkinter.font
 import os
 import json
 import AppLogs
@@ -17,6 +18,66 @@ class AddApp(tk.Toplevel):
             self.priority_menu.configure(bg="red")
         elif selected == "GRAY":
             self.priority_menu.configure(bg="gray")
+
+    def characters_limit(self, *args):
+        self.insert_var.set(self.input_entry.get())
+        self.input_text_size = self.input_font.measure(self.input_entry.get())
+
+        if self.input_text_size > 260:
+            self.insert_var.set(self.insert_var.get()[:-1])
+
+    def confirm(self, e):
+        text = self.input_entry.get()
+
+        if text == "":
+            return
+
+        data = {
+            "date": self.date,
+            "button": self.data_button.winfo_name(),
+            "text": text,
+            "priority": self.priority.get()
+        }
+
+        year_month = self.date.split("-")
+        year_month = f"{year_month[0]}-{year_month[1]}"
+
+        path = f"data/{year_month}.json"
+
+        if not os.path.isfile(path):
+            with open(path, mode="w", encoding="utf-8") as file:
+                json.dump([], file)
+
+        # Read events from file
+        with open(path, mode='r', encoding='utf-8') as feedsjson:
+            feeds = json.load(feedsjson)
+
+        # Check if the same event exists already
+        for event in feeds:
+            if text == event['text'] and data['date'] == event['date']:
+                AppLogs.error(f"Tried to add event that already exists ({text})")
+
+                if self.input_text_size > 240:
+                    AppLogs.error(f"Text in the event had to be shortened to add a duplicate")
+                    self.input_entry.delete(0, tk.END)
+                    self.input_entry.insert(tk.END, text[:-2])
+
+                if text.startswith(f"{text[:-4]} (") and text[-1] == ")":
+                    new_number = int(text[-2]) + 1
+                    self.input_entry.delete(0, tk.END)
+                    self.input_entry.insert(tk.END, f"{text[:-4]} ({new_number})")
+                else:
+                    self.input_entry.insert(tk.END, f" (1)")
+                return
+
+        # Save new events
+        with open(path, mode="w", encoding="utf-8") as file:
+            feeds.append(data)
+            json.dump(feeds, file)
+
+        AppLogs.warning(f'Added new event: {data}')
+
+        self.exit()
 
     def __init__(self, data):
         super().__init__()
@@ -63,11 +124,16 @@ class AddApp(tk.Toplevel):
         self.info_label.pack(pady=5, padx=10, side=tk.LEFT)
 
         # Input text
-        self.input_entry = tk.Entry(self.input_frame, font=("Arial", 10, "bold"))
+        self.insert_var = tk.StringVar()
+        self.input_font = tkinter.font.Font(family="Arial", size=10, weight="bold")
+        self.input_text_size = 0
+
+        self.input_entry = tk.Entry(self.input_frame, font=self.input_font, textvariable=self.insert_var)
         self.input_entry.configure(width=40)
         self.input_entry.pack(pady=5, side=tk.LEFT)
         self.input_entry.focus_force()
         self.input_entry.bind("<Return>", self.confirm)
+        self.insert_var.trace('w', self.characters_limit)
 
         # Priority menu
         self.priority = tk.StringVar(self, value="GRAY")
@@ -97,51 +163,3 @@ class AddApp(tk.Toplevel):
                                      bg="black", fg="white")
         self.exit_button.config(command=self.exit, width=50, height=self.window_height)
         self.exit_button.pack()
-
-    def confirm(self, e):
-        text = self.input_entry.get()
-
-        if text == "":
-            return
-
-        data = {
-            "date": self.date,
-            "button": self.data_button.winfo_name(),
-            "text": text,
-            "priority": self.priority.get()
-        }
-
-        year_month = self.date.split("-")
-        year_month = f"{year_month[0]}-{year_month[1]}"
-
-        path = f"data/{year_month}.json"
-
-        if not os.path.isfile(path):
-            with open(path, mode="w", encoding="utf-8") as file:
-                json.dump([], file)
-
-        # Read events from file
-        with open(path, mode='r', encoding='utf-8') as feedsjson:
-            feeds = json.load(feedsjson)
-
-        # Check if the same event exists already
-        for event in feeds:
-            if text == event['text'] and data['date'] == event['date']:
-                AppLogs.error(f"Tried to add event that already exists ({text})")
-
-                if text.startswith(f"{text[:-4]} (") and text[-1] == ")":
-                    new_number = int(text[-2]) + 1
-                    self.input_entry.delete(0, tk.END)
-                    self.input_entry.insert(tk.END, f"{text[:-4]} ({new_number})")
-                else:
-                    self.input_entry.insert(tk.END, f" (1)")
-                return
-
-        # Save new events
-        with open(path, mode="w", encoding="utf-8") as file:
-            feeds.append(data)
-            json.dump(feeds, file)
-
-        AppLogs.warning(f'Added new event: {data}')
-
-        self.exit()

@@ -112,11 +112,12 @@ class StartingApp(tk.Toplevel):
         if len(events) > 15:
             # Show right frame
             self.right_frame.grid(row=0, column=1)
-            self.left_frame.configure(width=343)
+            self.left_frame.configure(width=443)
+
         else:
             # Hide right frame
             self.right_frame.grid_forget()
-            self.left_frame.configure(width=680)
+            self.left_frame.configure(width=890)
 
         for i, label in enumerate(self.left_frame.winfo_children()):
             try:
@@ -178,13 +179,12 @@ class StartingApp(tk.Toplevel):
         self.lift()
         self.attributes("-topmost", True)
 
-        self.window_width = 700
-        self.window_height = 700
+        self.window_width = 900
+        self.window_height = 800
         self.screen_width = self.winfo_screenwidth()
         self.screen_height = self.winfo_screenheight()
         self.x_coordinate = int((self.screen_width / 2) - (self.window_width / 2))
         self.y_coordinate = int((self.screen_height / 2) - (self.window_height / 2))
-        self.geometry("{}x{}+{}+{}".format(self.window_width, self.window_height, self.x_coordinate, self.y_coordinate))
         self.geometry(
             "{}x{}+{}+{}".format(self.window_width, self.window_height, self.x_coordinate, self.y_coordinate))
 
@@ -201,7 +201,7 @@ class StartingApp(tk.Toplevel):
         self.current_month_label = tk.Button(self.menu_frame, name="current_month_label", text="Ten miesiąc",
                                           font=("Arial", 13, "bold"), bg="black", fg="white", width=14)
         self.current_month_label.configure(command=lambda: self.show_events(-1))
-        self.current_month_label.pack(side=tk.LEFT, padx=58, anchor=tk.CENTER)
+        self.current_month_label.pack(side=tk.LEFT, padx=109, anchor=tk.CENTER)
 
         # Next 7 days button
         self.next_week_label = tk.Button(self.menu_frame, name="next_week_label", text="Najbliższe 7 dni",
@@ -213,33 +213,34 @@ class StartingApp(tk.Toplevel):
         self.next_month_label = tk.Button(self.menu_frame, name="next_month_label", text="Następny miesiąc",
                                     font=("Arial", 13, "bold"), bg="black", fg="white", width=14)
         self.next_month_label.configure(command=lambda: self.show_events(1))
-        self.next_month_label.pack(side=tk.LEFT, padx=58, anchor=tk.CENTER)
+        self.next_month_label.pack(side=tk.LEFT, padx=109, anchor=tk.CENTER)
 
         # Main frame
-        self.main_frame = tk.Frame(self, name="main_frame", bg="gray", width=self.window_width - 10, height=600)
+        self.main_frame = tk.Frame(self, name="main_frame", bg="gray",
+                                   width=self.window_width - 10, height=self.window_height - 100)
         self.main_frame.config(highlightthickness=2, highlightbackground="black")
         self.main_frame.grid(row=1, column=0)
         self.main_frame.grid_propagate(False)
 
         # Left main frame
-        self.left_frame = tk.Frame(self.main_frame, name="left_frame", bg="gray", width=343, height=596)
+        self.left_frame = tk.Frame(self.main_frame, name="left_frame", bg="gray", width=443, height=696)
         self.left_frame.grid(row=0, column=0)
         self.left_frame.pack_propagate(False)
 
         # Right main frame
-        self.right_frame = tk.Frame(self.main_frame, name="right_frame", bg="gray", width=343, height=596)
+        self.right_frame = tk.Frame(self.main_frame, name="right_frame", bg="gray", width=443, height=696)
         self.right_frame.grid(row=0, column=1)
         self.right_frame.pack_propagate(False)
 
         # Dates label
         for i in range(15):
-            self.date_label = tk.Label(self.left_frame, name=f"date{i}_label", font=("Arial", 8, "bold"),
+            self.date_label = tk.Label(self.left_frame, name=f"date{i}_label", font=("Arial", 12, "bold"),
                                          bg="dark slate gray", fg="white")
             self.date_label.config(highlightthickness=2, highlightbackground="black")
             self.date_label.pack(pady=7)
 
         for i in range(15, 30):
-            self.date_label = tk.Label(self.right_frame, name=f"date{i}_label", font=("Arial", 8, "bold"),
+            self.date_label = tk.Label(self.right_frame, name=f"date{i}_label", font=("Arial", 12, "bold"),
                                          bg="dark slate gray", fg="white")
             self.date_label.config(highlightthickness=2, highlightbackground="black")
             self.date_label.pack(pady=7)
