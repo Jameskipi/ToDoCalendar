@@ -86,6 +86,7 @@ class StartingApp(tk.Toplevel):
             label.configure(text="", bg="gray", fg="white")
             label.configure(highlightbackground="gray")
 
+        # Button options
         match option:
             case -1:
                 events = self.current_month_events
@@ -109,6 +110,7 @@ class StartingApp(tk.Toplevel):
         # Sort events
         events.sort(key=lambda x: datetime.strptime(x['date'], '%Y-%m-%d'))
 
+        # Frame management
         if len(events) > 15:
             # Show right frame
             self.right_frame.grid(row=0, column=1)
@@ -119,6 +121,15 @@ class StartingApp(tk.Toplevel):
             self.right_frame.grid_forget()
             self.left_frame.configure(width=890)
 
+        # Changing font depending on the number of events
+        if len(events) < 15:
+            for label in self.left_frame.winfo_children():
+                label.configure(font=("Arial", 15, "bold"))
+        else:
+            for label in self.left_frame.winfo_children():
+                label.configure(font=("Arial", 12, "bold"))
+
+        # Update left frame
         for i, label in enumerate(self.left_frame.winfo_children()):
             try:
                 eu_date = events[i]['date'].split("-")
@@ -139,6 +150,7 @@ class StartingApp(tk.Toplevel):
             except IndexError:
                 continue
 
+        # Update right frame
         if len(events) > 15:
             i = 15
             for label in self.right_frame.winfo_children():
