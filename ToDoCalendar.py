@@ -9,6 +9,7 @@ import AppLogs
 from StartingApp import StartingApp
 from AddApp import AddApp
 from RemoveApp import RemoveApp
+from Translator import translate_month
 
 
 class App(tk.Tk):
@@ -114,33 +115,6 @@ class App(tk.Tk):
                 day_button.configure(bg="#007FFF")
 
     def change_month(self, add_number):
-        def translate_month(number):
-            match number:
-                case 1:
-                    return "Styczeń"
-                case 2:
-                    return "Luty"
-                case 3:
-                    return "Marzec"
-                case 4:
-                    return "Kwiecień"
-                case 5:
-                    return "Maj"
-                case 6:
-                    return "Czerwiec"
-                case 7:
-                    return "Lipiec"
-                case 8:
-                    return "Sierpień"
-                case 9:
-                    return "Wrzesień"
-                case 10:
-                    return "Październik"
-                case 11:
-                    return "Listopad"
-                case 12:
-                    return "Grudzień"
-
         if add_number == 0:
             raw_date = str(date.today()).split("-")
             year = int(raw_date[0])
@@ -162,7 +136,7 @@ class App(tk.Tk):
         else:
             self.month = self.month + add_number
 
-        self.month_label.config(text=translate_month(self.month))
+        self.month_label.config(text=translate_month(self.month, self.language))
         self.year_label.config(text=self.year)
 
         self.update_days()
@@ -225,18 +199,19 @@ class App(tk.Tk):
         self.x_coordinate = self.winfo_x() + 8
         self.y_coordinate = self.winfo_y() + 32
 
-        self.save_position()
+        self.save_config()
 
         self.geometry(
             "{}x{}+{}+{}".format(self.window_width, self.window_height, self.x_coordinate, self.y_coordinate))
         return
 
-    def save_position(self):
+    def save_config(self):
         # Save current position to json file
 
         config = {
             "x": self.x_coordinate,
-            "y": self.y_coordinate
+            "y": self.y_coordinate,
+            "language": self.language
         }
 
         with open("data/config.json", mode="w", encoding="utf-8") as file:
@@ -244,14 +219,15 @@ class App(tk.Tk):
 
         AppLogs.warning(f"New coordinates for startup: {config}")
 
-    def read_position(self):
+    def read_config(self):
         # Create config file
         if not os.path.exists("data/config.json"):
             AppLogs.warning("Creating new config file")
 
             config = {
                 "x": self.x_coordinate,
-                "y": self.y_coordinate
+                "y": self.y_coordinate,
+                "language": "ENG"
             }
 
             with open("data/config.json", mode="w", encoding="utf-8") as file:
@@ -264,6 +240,8 @@ class App(tk.Tk):
         AppLogs.warning(f"Main App started at coordinates: {config}")
         self.x_coordinate = config["x"]
         self.y_coordinate = config["y"]
+        self.language = config["language"]
+
         self.geometry(
             "{}x{}+{}+{}".format(self.window_width, self.window_height, self.x_coordinate, self.y_coordinate))
 
@@ -364,9 +342,6 @@ class App(tk.Tk):
         # Logger setup
         AppLogs.start()
 
-        # Popup window with important dates
-        self.popup = StartingApp()
-
         # Initial
         self.title("To Do")
         self.resizable(False, False)
@@ -383,7 +358,11 @@ class App(tk.Tk):
         self.y_coordinate = int((self.screen_height / 2) - (self.window_height / 2))
 
         # Read saved position from config
-        self.read_position()
+        self.language = "ENG"
+        self.read_config()
+
+        # Popup window with important dates
+        self.popup = StartingApp()
 
         # Menu frame
         self.menu_frame = tk.Frame(self, name="exit_frame", bg="green", width=self.window_width, height=30)
