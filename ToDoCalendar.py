@@ -192,18 +192,18 @@ class App(tk.Tk):
         self.attributes('-fullscreen', True)
         self.anchor_button['state'] = "disabled"
 
-        self.menu_frame.config(width=self.screen_width, height=30, bg="dark slate gray")
+        self.menu_frame.config(width=self.screen_width, height=30, bg="black")
         self.main_frame.config(width=self.screen_width, height=self.screen_height)
         self.main_frame.grid(pady=int((self.screen_height / 2) - (self.window_height / 2) - 100))
 
-        self.main_frame.configure(bg="dark slate gray")
+        self.main_frame.configure(bg="#28231D")
         for widget in self.main_frame.winfo_children():
-            widget.configure(bg="dark slate gray")
+            widget.configure(bg="#28231D")
 
         # Show more details
         self.details_frame.config(height=300)
-        self.detail_date_label.configure(bg="dark slate gray", font=("Arial", 15, "bold"))
-        self.detail_label.configure(bg="dark slate gray", font=("Arial", 12, "bold"))
+        self.detail_date_label.configure(bg="#28231D", font=("Arial", 15, "bold"))
+        self.detail_label.configure(bg="#28231D", font=("Arial", 12, "bold"))
 
         return
 
@@ -319,8 +319,8 @@ class App(tk.Tk):
 
     def hide_events(self, event):
         if self.attributes("-fullscreen"):
-            self.detail_date_label.configure(text="", bg="dark slate gray")
-            self.detail_label.configure(text="", bg="dark slate gray")
+            self.detail_date_label.configure(text="", bg="#28231D")
+            self.detail_label.configure(text="", bg="#28231D")
             return
 
         self.detail_date_label.configure(text="", bg="green")
@@ -372,7 +372,7 @@ class App(tk.Tk):
         self.resizable(False, False)
         self.overrideredirect(True)
         self.wm_attributes("-transparentcolor", "green")
-        self.configure(bg='gray')
+        self.configure(bg='#353935')
         self.lower_window(self.event_generate("<<Foo>>"))
 
         self.window_width = 500

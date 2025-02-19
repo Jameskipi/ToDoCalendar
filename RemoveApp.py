@@ -75,7 +75,7 @@ class RemoveApp(tk.Toplevel):
         self.geometry("{}x{}+{}+{}".format(self.window_width, self.window_height, x_coordinate, y_coordinate))
 
         # Input text frame
-        self.input_frame = tk.Frame(self, name="input_frame", bg="#a4dade", width=500, height=self.window_height)
+        self.input_frame = tk.Frame(self, name="input_frame", bg="#353935", width=500, height=self.window_height)
         self.input_frame.grid(row=0, column=1)
         self.input_frame.pack_propagate(False)
         self.input_frame.configure(highlightthickness=3, highlightbackground="black")
@@ -89,8 +89,8 @@ class RemoveApp(tk.Toplevel):
 
         eu_date = f"{eu_date[2]}.{eu_date[1]}.{eu_date[0]}"
 
-        self.info_label = tk.Label(self.input_frame, name="info_label", bg="#4fb7bf", width=10, text=eu_date,
-                                   font=("Arial", 10, "bold"))
+        self.info_label = tk.Label(self.input_frame, name="info_label", bg="#160D08", fg="white", width=10,
+                                   text=eu_date, font=("Arial", 10, "bold"))
         self.info_label.config(highlightthickness=2, highlightbackground="black")
         self.info_label.pack(pady=5, padx=10, side=tk.LEFT)
 

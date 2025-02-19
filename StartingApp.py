@@ -79,33 +79,33 @@ class StartingApp(tk.Toplevel):
 
         # Clear all events
         for label in self.left_frame.winfo_children():
-            label.configure(text="", bg="gray", fg="white")
-            label.configure(highlightbackground="gray")
+            label.configure(text="", bg=self.main_color, fg="white")
+            label.configure(highlightbackground=self.main_color)
 
         for label in self.right_frame.winfo_children():
-            label.configure(text="", bg="gray", fg="white")
-            label.configure(highlightbackground="gray")
+            label.configure(text="", bg=self.main_color, fg="white")
+            label.configure(highlightbackground=self.main_color)
 
         # Button options
         match option:
             case -1:
                 events = self.current_month_events
 
-                self.current_month_label.configure(fg="white")
-                self.next_week_label.configure(fg="gray")
-                self.next_month_label.configure(fg="gray")
+                self.current_month_button.configure(fg="white")
+                self.next_week_button.configure(fg="gray")
+                self.next_month_button.configure(fg="gray")
             case 0:
                 events = self.next_week_events
 
-                self.current_month_label.configure(fg="gray")
-                self.next_week_label.configure(fg="white")
-                self.next_month_label.configure(fg="gray")
+                self.current_month_button.configure(fg="gray")
+                self.next_week_button.configure(fg="white")
+                self.next_month_button.configure(fg="gray")
             case 1:
                 events = self.next_month_events
 
-                self.current_month_label.configure(fg="gray")
-                self.next_week_label.configure(fg="gray")
-                self.next_month_label.configure(fg="white")
+                self.current_month_button.configure(fg="gray")
+                self.next_week_button.configure(fg="gray")
+                self.next_month_button.configure(fg="white")
 
         # Sort events
         events.sort(key=lambda x: datetime.strptime(x['date'], '%Y-%m-%d'))
@@ -119,7 +119,7 @@ class StartingApp(tk.Toplevel):
         else:
             # Hide right frame
             self.right_frame.grid_forget()
-            self.left_frame.configure(width=890)
+            self.left_frame.configure(width=885)
 
         # Changing font depending on the number of events
         if len(events) < 15:
@@ -141,8 +141,8 @@ class StartingApp(tk.Toplevel):
                 eu_date = f"{eu_date[2]}.{eu_date[1]}.{eu_date[0]}"
 
                 text = f"{eu_date}   -   {events[i]['text']}"
-                label.configure(text=text, bg="dark slate gray")
-                label.configure(highlightbackground="black")
+                label.configure(text=text, bg=self.labels_color)
+                label.configure(highlightbackground=self.highlight_color)
 
                 if events[i]['priority'] == "RED":
                     label.configure(fg="red")
@@ -164,8 +164,8 @@ class StartingApp(tk.Toplevel):
                     eu_date = f"{eu_date[2]}.{eu_date[1]}.{eu_date[0]}"
 
                     text = f"{eu_date}   -   {events[i]['text']}"
-                    label.configure(text=text, bg="dark slate gray")
-                    label.configure(highlightbackground="black")
+                    label.configure(text=text, bg=self.labels_color)
+                    label.configure(highlightbackground=self.highlight_color)
 
                     if events[i]['priority'] == "RED":
                         label.configure(fg="red")
@@ -177,17 +177,27 @@ class StartingApp(tk.Toplevel):
 
     def __init__(self):
         super().__init__()
+
         self.current_month_events = []
         self.next_month_events = []
         self.next_week_events = []
+
+        # Background colors
+        self.menu_color = "black"
+        self.main_color = "#353935"
+        self.buttons_color = "black"
+        self.labels_color = "#160D08"
+        self.highlight_color = "black"
+        self.exit_frame_color = "black"
+        self.exit_button_color = "black"
 
         # Initial
         self.title("Important dates")
         self.resizable(False, False)
         self.wm_attributes("-transparentcolor", "green")
         self.overrideredirect(True)
-        self.configure(bg='gray')
-        self.config(highlightthickness=5, highlightbackground="black")
+        self.configure(bg=self.main_color)
+        self.config(highlightthickness=5, highlightbackground="#0D0907")
         self.lift()
         self.attributes("-topmost", True)
 
@@ -204,68 +214,68 @@ class StartingApp(tk.Toplevel):
         self.get_events()
 
         # Menu frame
-        self.menu_frame = tk.Frame(self, name="menu_frame", bg="dark slate gray", width=self.window_width - 10, height=50)
-        self.menu_frame.config(highlightthickness=2, highlightbackground="black")
+        self.menu_frame = tk.Frame(self, name="menu_frame", bg=self.menu_color, width=self.window_width - 10, height=50)
+        self.menu_frame.config(highlightthickness=2, highlightbackground=self.highlight_color)
         self.menu_frame.grid(row=0, column=0)
         self.menu_frame.pack_propagate(False)
 
         # Current month
-        self.current_month_label = tk.Button(self.menu_frame, name="current_month_label", text="Ten miesiąc",
-                                          font=("Arial", 13, "bold"), bg="black", fg="white", width=14)
-        self.current_month_label.configure(command=lambda: self.show_events(-1))
-        self.current_month_label.pack(side=tk.LEFT, padx=109, anchor=tk.CENTER)
+        self.current_month_button = tk.Button(self.menu_frame, name="current_month_button", text="Ten miesiąc",
+                                              font=("Arial", 13, "bold"), bg=self.buttons_color, fg="white", width=14)
+        self.current_month_button.configure(command=lambda: self.show_events(-1))
+        self.current_month_button.pack(side=tk.LEFT, padx=109, anchor=tk.CENTER)
 
         # Next 7 days button
-        self.next_week_label = tk.Button(self.menu_frame, name="next_week_label", text="Najbliższe 7 dni",
-                                    font=("Arial", 13, "bold"), bg="black", fg="white", width=14)
-        self.next_week_label.configure(command=lambda: self.show_events(0))
-        self.next_week_label.pack(side=tk.LEFT, anchor=tk.CENTER)
+        self.next_week_button = tk.Button(self.menu_frame, name="next_week_button", text="Najbliższe 7 dni",
+                                          font=("Arial", 13, "bold"), bg=self.buttons_color, fg="white", width=14)
+        self.next_week_button.configure(command=lambda: self.show_events(0))
+        self.next_week_button.pack(side=tk.LEFT, anchor=tk.CENTER)
 
         # Next month
-        self.next_month_label = tk.Button(self.menu_frame, name="next_month_label", text="Następny miesiąc",
-                                    font=("Arial", 13, "bold"), bg="black", fg="white", width=14)
-        self.next_month_label.configure(command=lambda: self.show_events(1))
-        self.next_month_label.pack(side=tk.LEFT, padx=109, anchor=tk.CENTER)
+        self.next_month_button = tk.Button(self.menu_frame, name="next_month_button", text="Następny miesiąc",
+                                           font=("Arial", 13, "bold"), bg=self.buttons_color, fg="white", width=14)
+        self.next_month_button.configure(command=lambda: self.show_events(1))
+        self.next_month_button.pack(side=tk.LEFT, padx=109, anchor=tk.CENTER)
 
         # Main frame
-        self.main_frame = tk.Frame(self, name="main_frame", bg="gray",
+        self.main_frame = tk.Frame(self, name="main_frame", bg=self.main_color,
                                    width=self.window_width - 10, height=self.window_height - 100)
-        self.main_frame.config(highlightthickness=2, highlightbackground="black")
+        self.main_frame.config(highlightthickness=2, highlightbackground=self.highlight_color)
         self.main_frame.grid(row=1, column=0)
         self.main_frame.grid_propagate(False)
 
         # Left main frame
-        self.left_frame = tk.Frame(self.main_frame, name="left_frame", bg="gray", width=443, height=696)
+        self.left_frame = tk.Frame(self.main_frame, name="left_frame", bg=self.main_color, width=443, height=696)
         self.left_frame.grid(row=0, column=0)
         self.left_frame.pack_propagate(False)
 
         # Right main frame
-        self.right_frame = tk.Frame(self.main_frame, name="right_frame", bg="gray", width=443, height=696)
+        self.right_frame = tk.Frame(self.main_frame, name="right_frame", bg=self.main_color, width=443, height=696)
         self.right_frame.grid(row=0, column=1)
         self.right_frame.pack_propagate(False)
 
         # Dates label
         for i in range(15):
             self.date_label = tk.Label(self.left_frame, name=f"date{i}_label", font=("Arial", 12, "bold"),
-                                         bg="dark slate gray", fg="white")
-            self.date_label.config(highlightthickness=2, highlightbackground="black")
+                                       bg=self.labels_color, fg="white")
+            self.date_label.config(highlightthickness=2, highlightbackground=self.highlight_color)
             self.date_label.pack(pady=7)
 
         for i in range(15, 30):
             self.date_label = tk.Label(self.right_frame, name=f"date{i}_label", font=("Arial", 12, "bold"),
-                                         bg="dark slate gray", fg="white")
-            self.date_label.config(highlightthickness=2, highlightbackground="black")
+                                       bg=self.labels_color, fg="white")
+            self.date_label.config(highlightthickness=2, highlightbackground=self.highlight_color)
             self.date_label.pack(pady=7)
 
         # Confirmation frame
-        self.exit_frame = tk.Frame(self, name="exit_frame", bg="dark slate gray", width=self.window_width - 10, height=40)
-        self.exit_frame.config(highlightthickness=2, highlightbackground="black")
+        self.exit_frame = tk.Frame(self, name="exit_frame", bg=self.exit_frame_color, width=self.window_width - 10, height=40)
+        self.exit_frame.config(highlightthickness=2, highlightbackground=self.highlight_color)
         self.exit_frame.grid(row=2, column=0)
         self.exit_frame.pack_propagate(False)
 
         # Confirm button
         self.exit_button = tk.Button(self.exit_frame, name="exit_button", text="OK", font=("Arial", 13, "bold"),
-                                     bg="black", fg="white")
+                                     bg=self.exit_button_color, fg="white")
         self.exit_button.config(command=self.destroy, width=5)
         self.exit_button.pack(side=tk.TOP, anchor=tk.CENTER, pady=1)
 
